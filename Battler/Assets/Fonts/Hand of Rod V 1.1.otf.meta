@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: d68a453061401d1499f53aff45f85bb7
+timeCreated: 1509356577
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Hand of Rod V 1.1
+  fontNames:
+  - Hand of Rod V 1.1
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

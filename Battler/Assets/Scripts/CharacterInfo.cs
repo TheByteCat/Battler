@@ -10,6 +10,8 @@ public class WeaponInfo
     public int Ditance;
     public float Accuracy;
     public int BulletCount;
+    public float DamageReduce;
+    public float AccuracyReduce;
 }
 
 [CreateAssetMenu(menuName = "Battler/Character")]
