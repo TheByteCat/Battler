@@ -5,8 +5,8 @@ public class Bullet : MonoBehaviour
 {
     public float DistBetweenCharacters = 3.3f;
     public float DistBetweenTeams = 4.7f;
-    public int Distance;
     public float Speed = 10;
+    public Renderer Renderer;
 
     private float realDistance;
     private float distanceLeft;
@@ -18,12 +18,12 @@ public class Bullet : MonoBehaviour
 
     }
 
-    public void Send(Material material)
+    public void Send(int Distance, Material material)
     {
         realDistance = DistBetweenTeams + Distance * DistBetweenCharacters;
         direction = Vector3.right;
         distanceLeft = 0;
-        GetComponentInChildren<Renderer>().material = material;
+        Renderer.material = material;
         IsReady = true;
     }
 

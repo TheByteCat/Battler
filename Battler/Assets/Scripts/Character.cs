@@ -32,7 +32,7 @@ public class Character : MonoBehaviour
     public Text HideBtnText;
     public Text reloadBtnText;
     public Text selectBtnText;
-    public Image cooldownImage;
+    public Image nobulletImage;
     public Character Target;
     public Material material;
 
@@ -49,6 +49,8 @@ public class Character : MonoBehaviour
             {
                 reloadButton.enabled = true;
                 reloadBtnText.text = "RELOAD";
+                nobulletImage.gameObject.SetActive(true);
+                nobulletImage.fillAmount = 1;
             }
         }
     }
@@ -68,7 +70,7 @@ public class Character : MonoBehaviour
         reloadBtnText.text = BulletCount.ToString();
         reloadButton.onClick.AddListener(UpdateBullet);
         reloadButton.enabled = false;
-        cooldownImage.gameObject.SetActive(false);
+        nobulletImage.gameObject.SetActive(false);
 
         material = GetComponentInChildren<Renderer>().material;
     }
@@ -138,6 +140,7 @@ public class Character : MonoBehaviour
     {
         StartCoroutine(ReloadBullet(Weapon.CooldownTime));
         reloadButton.enabled = false;
+
     }
 
     public void Attack(Character target, int dist)
@@ -148,15 +151,10 @@ public class Character : MonoBehaviour
         StartCoroutine(AttackAnimation());
         StartCoroutine(ReloadWeapon(Weapon.CooldownTime));
         if (target != null)
-        {
-            float damage = Weapon.Attack;
+        {            
             int distOver = Mathf.Max(0, dist - Weapon.Ditance + 1);
-            float accureny = Weapon.Accuracy;
-            if (distOver > 0)
-            {
-                damage = Mathf.Max(0, distOver * Weapon.DamageReduce * damage);
-                accureny = Mathf.Max(0, distOver * Weapon.AccuracyReduce * accureny);
-            }
+            float damage = Mathf.Max(0, Mathf.Pow(Weapon.DamageReduce, distOver) * Weapon.Attack);
+            float accureny = Mathf.Max(0, Mathf.Pow(Weapon.AccuracyReduce, distOver) * Weapon.Accuracy);
             if (Random.value > accureny)
                 damage = 0;
             StartCoroutine(DelayDamage(target, shotTime, damage));
@@ -172,9 +170,8 @@ public class Character : MonoBehaviour
     public float SendBullet(int dist)
     {
         var bullet = Instantiate(BulletPrefab, BulletStartPosition);
-        var bulletScript = bullet.AddComponent<Bullet>();
-        bulletScript.Distance = dist;
-        bulletScript.Send(material);
+        var bulletScript = bullet.GetComponent<Bullet>();
+        bulletScript.Send(dist, material);
         return bulletScript.ShotTime;
     }
 
@@ -188,28 +185,28 @@ public class Character : MonoBehaviour
     private IEnumerator ReloadWeapon(float cooldown)
     {
         float time = cooldown;
-        cooldownImage.gameObject.SetActive(true);
+        //cooldownImage.gameObject.SetActive(true);
         while (time > 0)
         {
             time -= Time.deltaTime;
-            cooldownImage.fillAmount = time / cooldown;
+            //cooldownImage.fillAmount = time / cooldown;
             yield return null;
         }
-        cooldownImage.gameObject.SetActive(false);
+        //cooldownImage.gameObject.SetActive(false);
         Reloading = false;
     }
 
     private IEnumerator ReloadBullet(float cooldown)
     {
         float time = cooldown;
-        cooldownImage.gameObject.SetActive(true);
+        nobulletImage.gameObject.SetActive(true);
         while (time > 0)
         {
             time -= Time.deltaTime;
-            cooldownImage.fillAmount = time / cooldown;
+            nobulletImage.fillAmount = time / cooldown;
             yield return null;
         }
-        cooldownImage.gameObject.SetActive(false);
+        nobulletImage.gameObject.SetActive(false);
         BulletCount = Weapon.BulletCount;
     }
 
@@ -229,6 +226,7 @@ public class Character : MonoBehaviour
     public void Die()
     {
         Alive = false;
+        nobulletImage.gameObject.SetActive(false);
         animator.SetTrigger("Die");
     }
 }
