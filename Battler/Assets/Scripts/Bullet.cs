@@ -18,11 +18,12 @@ public class Bullet : MonoBehaviour
 
     }
 
-    public void Send()
+    public void Send(Material material)
     {
         realDistance = DistBetweenTeams + Distance * DistBetweenCharacters;
         direction = Vector3.right;
         distanceLeft = 0;
+        GetComponentInChildren<Renderer>().material = material;
         IsReady = true;
     }
 
