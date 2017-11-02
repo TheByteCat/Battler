@@ -33,4 +33,14 @@ public class SelectTargetManager:MonoBehaviour
             selfTeam[i].SetSelectState(false);
         }
     }
+
+    public void Select(int source, int target)
+    {
+        arrows.SelectTarget(source, target);
+    }
+
+    public void UnSelect(int source)
+    {
+        arrows.DisableRaw(source);
+    }
 }

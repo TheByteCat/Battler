@@ -11,9 +11,10 @@ public class Character : MonoBehaviour
     private System.Collections.Generic.List<Character> enemyTeam;
     private int position;
     private int bulletCount; // { get; private set; }
-    private WeaponInfo Weapon { get { return characterInfo.WeaponInfo; } }    
+    private WeaponInfo Weapon { get { return characterInfo.WeaponInfo; } }
 
     public CharacterInfo characterInfo;
+    public EnemyAI AI;
 
     public float Hp; // { get; private set; }
     public bool IsHide; // { get; private set; }
@@ -29,6 +30,7 @@ public class Character : MonoBehaviour
     public Slider HealthBar;
     public Text HealthBarText;
     public Button reloadButton;
+    public Button HideButton;
     public Text HideBtnText;
     public Text reloadBtnText;
     public Text selectBtnText;
@@ -66,6 +68,7 @@ public class Character : MonoBehaviour
         Reloading = false;
         Alive = true;
         Attacking = false;
+        animator.SetFloat("HideSpeed", characterInfo.HideSpeed);
 
         reloadBtnText.text = BulletCount.ToString();
         reloadButton.onClick.AddListener(UpdateBullet);
@@ -75,41 +78,98 @@ public class Character : MonoBehaviour
         material = GetComponentInChildren<Renderer>().material;
     }
 
-    public IEnumerator Battle(Slot[] enemies, int pos)
+    public void StartBattle(Slot[] enemies, int pos)
     {
         enemyTeam = enemies.Select(x => x.character).ToList();
         position = pos;
-        if (!IsHide)
+        StartCoroutine(Battle());
+        StartCoroutine(SelectTarget(0.1f));
+        if (AI != null)
         {
-            SetPosition();
+            StartCoroutine(AIBattle());
         }
+    }
 
+    private IEnumerator AIBattle()
+    {
+        if (IsHide)
+            SetPosition();
+        while (true)
+        {
+            if (!HaveBullets)
+            {
+                if (!Reloading)
+                    UpdateBullet();
+                if (!IsHide && AI.HideWhenReloading)
+                    SetPosition();
+            }
+            else
+                if (IsHide)
+                SetPosition();
+            yield return null;
+        }
+    }
+
+    private IEnumerator SelectTarget(float delay)
+    {
         while (true)
         {
             if (!Alive)
+            {
                 yield break;
+            }
+
+            int newTarget = -1;
+            for (int i = 2; i >= 0; i--)
+                if (!enemyTeam[i].IsHide && enemyTeam[i].Alive)
+                    newTarget = i;
+            if (newTarget == -1)
+            {
+                for (int i = 2; i >= 0; i--)
+                    if (enemyTeam[i].Alive)
+                        newTarget = i;
+            }
+
+            if (newTarget == -1)
+            {
+                if (AI == null)
+                    GameController.Instance.TargetManager.UnSelect(position);
+                Target = null;
+            }
+            else
+            {
+                if (AI == null && enemyTeam[newTarget] != Target)
+                    GameController.Instance.TargetManager.Select(position, newTarget);
+                Target = enemyTeam[newTarget];
+            }
+
+            yield return new WaitForSeconds(delay);
+        }
+    }
+
+    private IEnumerator Battle()
+    {
+        //if (!IsHide)
+        //{
+        //    SetPosition();
+        //}
+        yield return new WaitForSeconds(1f);
+        while (true)
+        {
+            if (!Alive)
+            {
+                GameController.Instance.TargetManager.UnSelect(position);
+                yield break;
+            }
 
             if (!IsHide && !Reloading && HaveBullets)
             {
-                if (Target != null && Target.Alive && !Target.IsHide)
+                if (Target != null)
                 {
-                    Attack(Target, enemyTeam.FindIndex(x => x == Target) + position);
+                    Attack(enemyTeam.FindIndex(x => x == Target) + position);
                 }
                 else
-                {
-                    bool shot = false;
-                    for (int i = 0; i < 3; i++)
-                    {
-                        if (!enemyTeam[i].IsHide && enemyTeam[i].Alive)
-                        {
-                            Attack(enemyTeam[i], position + i);
-                            shot = true;
-                            break;
-                        }
-                    }
-                    if (!shot)
-                        Attack(null, position + 3);
-                }
+                    Attack(position + 3);
             }
 
             yield return null;
@@ -124,7 +184,11 @@ public class Character : MonoBehaviour
         else
             HideBtnText.text = "Get Up";
         animator.SetBool("IsHide", !IsHide);
+    }
 
+    private void SetHide(bool isHide)
+    {
+        animator.SetBool("IsHide", !isHide);
     }
 
     public void SetSelectState(bool isSelect)
@@ -140,38 +204,46 @@ public class Character : MonoBehaviour
     {
         StartCoroutine(ReloadBullet(Weapon.CooldownTime));
         reloadButton.enabled = false;
-
     }
 
-    public void Attack(Character target, int dist)
+    public void Attack(int dist)
     {
         float shotTime = SendBullet(dist);
         BulletCount--;
         Reloading = true;
         StartCoroutine(AttackAnimation());
         StartCoroutine(ReloadWeapon(Weapon.CooldownTime));
-        if (target != null)
-        {            
+        if (Target != null)
+        {
             int distOver = Mathf.Max(0, dist - Weapon.Ditance + 1);
+
+            StartCoroutine(DelayDamage(Target, shotTime, distOver));
+        }
+    }
+
+    public IEnumerator DelayDamage(Character target, float delay, int distOver)
+    {
+        yield return new WaitForSeconds(delay);
+        if (target != null)
+        {
             float damage = Mathf.Max(0, Mathf.Pow(Weapon.DamageReduce, distOver) * Weapon.Attack);
             float accureny = Mathf.Max(0, Mathf.Pow(Weapon.AccuracyReduce, distOver) * Weapon.Accuracy);
             if (Random.value > accureny)
                 damage = 0;
-            StartCoroutine(DelayDamage(target, shotTime, damage));
+            if (target.IsHide)
+            {
+                damage /= 3;
+                accureny /= 3;
+            }
+            target.GetDamage(damage, this);
         }
-    }
-
-    public IEnumerator DelayDamage(Character target, float delay, float damage)
-    {
-        yield return new WaitForSeconds(delay);
-        target.GetDamage(damage, this);
     }
 
     public float SendBullet(int dist)
     {
         var bullet = Instantiate(BulletPrefab, BulletStartPosition);
         var bulletScript = bullet.GetComponent<Bullet>();
-        bulletScript.Send(dist, material);
+        bulletScript.Send(Weapon.BulletSpeed, dist, material);
         return bulletScript.ShotTime;
     }
 
@@ -198,6 +270,7 @@ public class Character : MonoBehaviour
 
     private IEnumerator ReloadBullet(float cooldown)
     {
+        Reloading = true;
         float time = cooldown;
         nobulletImage.gameObject.SetActive(true);
         while (time > 0)
@@ -208,6 +281,7 @@ public class Character : MonoBehaviour
         }
         nobulletImage.gameObject.SetActive(false);
         BulletCount = Weapon.BulletCount;
+        Reloading = false;
     }
 
     public void GetDamage(float damage, Character from)
@@ -227,6 +301,8 @@ public class Character : MonoBehaviour
     {
         Alive = false;
         nobulletImage.gameObject.SetActive(false);
+        reloadButton.enabled = false;
+        HideButton.enabled = false;
         animator.SetTrigger("Die");
     }
 }

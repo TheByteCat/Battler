@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections.Generic;
+using System.Collections;
 
 public class Bullet : MonoBehaviour
 {
@@ -11,20 +11,20 @@ public class Bullet : MonoBehaviour
     private float realDistance;
     private float distanceLeft;
     private Vector3 direction;
-    private bool IsReady = false;
     // Use this for initialization
     void Start()
     {
 
     }
 
-    public void Send(int Distance, Material material)
+    public void Send(float speed, int Distance, Material material)
     {
+        Speed = speed;
         realDistance = DistBetweenTeams + Distance * DistBetweenCharacters;
         direction = Vector3.right;
         distanceLeft = 0;
         Renderer.material = material;
-        IsReady = true;
+        StartCoroutine(Fire());
     }
 
     public float ShotTime { get { return realDistance / Speed; } }
@@ -32,7 +32,12 @@ public class Bullet : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (IsReady)
+        
+    }
+
+    private IEnumerator Fire()
+    {
+        while (true)
         {
             if (distanceLeft < realDistance)
             {
@@ -44,6 +49,8 @@ public class Bullet : MonoBehaviour
             {
                 Destroy(gameObject);
             }
+
+            yield return null;
         }
     }
 }

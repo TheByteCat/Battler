@@ -12,6 +12,7 @@ public class WeaponInfo
     public int BulletCount;
     public float DamageReduce;
     public float AccuracyReduce;
+    public float BulletSpeed;
 }
 
 [CreateAssetMenu(menuName = "Battler/Character")]
@@ -19,6 +20,6 @@ public class CharacterInfo : ScriptableObject {
 
     public string Name;
     public int MaxHp;
-    public WeaponInfo WeaponInfo;
-	
+    public float HideSpeed;
+    public WeaponInfo WeaponInfo;    
 }

@@ -2,16 +2,17 @@
 using System.Collections;
 using System.Linq;
 
-public class GameController : MonoBehaviour
+public class GameController : myEventSystem.SingletonAsComponent<GameController>
 {
     public Slot[] selfTeam = new Slot[3];
     public Slot[] enemyTeam = new Slot[3];
-    public SelectTargetManager targetManager;
+    public SelectTargetManager TargetManager;
+    public bool IsPause;
 
     // Use this for initialization
     void Start()
     {
-        targetManager.SetUp(selfTeam, enemyTeam);
+        TargetManager.SetUp(selfTeam, enemyTeam);
         StartCoroutine(StartBattle());
     }
 
@@ -31,13 +32,22 @@ public class GameController : MonoBehaviour
 
     private IEnumerator StartBattle()
     {
-        HideAll();
+        //HideAll();
         yield return new WaitForSeconds(1);
         for (int i = 0; i < 3; i++)
         {
-            StartCoroutine(selfTeam[i].character.Battle(enemyTeam, i));
-            StartCoroutine(enemyTeam[i].character.Battle(selfTeam, i));
+            selfTeam[i].character.StartBattle(enemyTeam, i);
+            enemyTeam[i].character.StartBattle(selfTeam, i);
         }
     }
 
+    public void PauseGame()
+    {
+        IsPause = true;
+    }
+
+    public void ResumeGame()
+    {
+        IsPause = false;
+    }
 }
