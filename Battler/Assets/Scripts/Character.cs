@@ -38,6 +38,7 @@ public class Character : MonoBehaviour
     public Character Target;
     public Material material;
 
+
     public Animator animator;
 
     public int BulletCount
@@ -77,7 +78,8 @@ public class Character : MonoBehaviour
         reloadButton.enabled = false;
         nobulletImage.gameObject.SetActive(false);
 
-        material = GetComponentInChildren<Renderer>().material;
+        if (material == null)
+            material = GetComponentInChildren<Renderer>().material;
     }
 
     public void StartBattle(Slot[] enemies, int pos)
@@ -287,6 +289,7 @@ public class Character : MonoBehaviour
     public void GetDamage(float damage, Character from)
     {
         Hp -= damage;
+        Hp = Mathf.Round(Hp);
         HealthBar.value = Mathf.Max(0, Hp);
         HealthBarText.text = string.Format("{0}/{1}", Mathf.Max(0, Hp), characterInfo.MaxHp);
         var damageScript = Instantiate(DamageShowPrefab, DamagePosition).GetComponent<DamageShow>();
