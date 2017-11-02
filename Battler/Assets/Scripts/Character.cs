@@ -60,6 +60,8 @@ public class Character : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        if (AI != null || characterInfo == null)
+            characterInfo = CharacterInfo.Generate();
         Hp = characterInfo.MaxHp;
         HealthBar.maxValue = Hp;
         HealthBar.value = Hp;
@@ -168,8 +170,6 @@ public class Character : MonoBehaviour
                 {
                     Attack(enemyTeam.FindIndex(x => x == Target) + position);
                 }
-                else
-                    Attack(position + 3);
             }
 
             yield return null;
